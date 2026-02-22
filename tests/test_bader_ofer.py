@@ -1,7 +1,6 @@
 import numpy as np
-import pytest
 
-from seker.bader_ofer import allocate_seats, _apply_threshold, _compute_initial_seats
+from seker.bader_ofer import allocate_seats, _apply_threshold
 
 
 class TestThreshold:

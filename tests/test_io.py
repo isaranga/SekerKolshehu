@@ -2,8 +2,6 @@ import csv
 import json
 from pathlib import Path
 
-import pytest
-
 from seker.io import (
     load_parties,
     load_poll,

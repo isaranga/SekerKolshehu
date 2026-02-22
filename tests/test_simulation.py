@@ -1,5 +1,4 @@
 import numpy as np
-import pytest
 
 from seker.simulation import run_simulation
 from seker.stats import compute_stats, compute_seat_counts
