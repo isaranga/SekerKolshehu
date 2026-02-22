@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "seker"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = ["numpy>=1.24"]
+
+[project.scripts]
+seker = "seker.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[dependency-groups]
+dev = ["pytest>=7.0"]
