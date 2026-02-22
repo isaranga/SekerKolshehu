@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from numpy.random import Generator
 
 
