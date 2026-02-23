@@ -1,4 +1,5 @@
 import argparse
+import logging
 from pathlib import Path
 
 from seker.io import (
@@ -10,6 +11,8 @@ from seker.io import (
 )
 from seker.simulation import run_simulation
 from seker.stats import compute_stats, compute_seat_counts
+
+logger = logging.getLogger(__name__)
 
 
 def _project_root() -> Path:
@@ -37,7 +40,7 @@ def run_poll(
         if a in poll_parties and b in poll_parties
     ]
 
-    print(f"Running {election}/{poll_name} ({n_iterations} iterations, seed={seed})...")
+    logger.info(f"Running {election}/{poll_name} ({n_iterations} iterations, seed={seed})...")
     seat_arrays = run_simulation(
         poll["results"],
         poll["sample_size"],
@@ -52,7 +55,7 @@ def run_poll(
     poll_output = output_dir / election / poll_name
     write_stats(poll_output / "stats.json", stats)
     write_seat_counts(poll_output / "seat_counts.csv", counts)
-    print(f"  Output written to {poll_output}")
+    logger.info(f"Output written to {poll_output}")
 
 
 def cmd_run(args: argparse.Namespace) -> None:
@@ -73,7 +76,7 @@ def cmd_run(args: argparse.Namespace) -> None:
             any_run = True
 
     if not any_run:
-        print("No pending polls found.")
+        logger.info("No pending polls found.")
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -87,6 +90,7 @@ def main(argv: list[str] | None = None) -> None:
     run_parser.add_argument("--seed", type=int, default=42, help="Random seed")
 
     args = parser.parse_args(argv)
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     if args.command == "run":
         cmd_run(args)
     else:
