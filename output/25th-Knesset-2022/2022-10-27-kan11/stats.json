@@ -1,0 +1,116 @@
+{
+  "מחל": {
+    "avg_seats": 32.66,
+    "prob_pass_threshold": 1.0,
+    "ci_lower": 30,
+    "ci_upper": 36
+  },
+  "פה": {
+    "avg_seats": 25.17,
+    "prob_pass_threshold": 1.0,
+    "ci_lower": 22,
+    "ci_upper": 28
+  },
+  "ט": {
+    "avg_seats": 14.39,
+    "prob_pass_threshold": 1.0,
+    "ci_lower": 12,
+    "ci_upper": 17
+  },
+  "כן": {
+    "avg_seats": 11.2,
+    "prob_pass_threshold": 1.0,
+    "ci_lower": 9,
+    "ci_upper": 13
+  },
+  "שס": {
+    "avg_seats": 8.25,
+    "prob_pass_threshold": 1.0,
+    "ci_lower": 7,
+    "ci_upper": 10
+  },
+  "ג": {
+    "avg_seats": 7.1,
+    "prob_pass_threshold": 1.0,
+    "ci_lower": 6,
+    "ci_upper": 9
+  },
+  "אמת": {
+    "avg_seats": 5.94,
+    "prob_pass_threshold": 0.9907,
+    "ci_lower": 5,
+    "ci_upper": 7
+  },
+  "ל": {
+    "avg_seats": 5.72,
+    "prob_pass_threshold": 0.991,
+    "ci_lower": 4,
+    "ci_upper": 7
+  },
+  "מרצ": {
+    "avg_seats": 4.42,
+    "prob_pass_threshold": 0.8529,
+    "ci_lower": 0,
+    "ci_upper": 6
+  },
+  "עם": {
+    "avg_seats": 2.74,
+    "prob_pass_threshold": 0.5995,
+    "ci_lower": 0,
+    "ci_upper": 5
+  },
+  "ום": {
+    "avg_seats": 2.35,
+    "prob_pass_threshold": 0.5229,
+    "ci_lower": 0,
+    "ci_upper": 5
+  },
+  "ד": {
+    "avg_seats": 0.04,
+    "prob_pass_threshold": 0.0103,
+    "ci_lower": 0,
+    "ci_upper": 0
+  },
+  "ב": {
+    "avg_seats": 0.01,
+    "prob_pass_threshold": 0.0027,
+    "ci_lower": 0,
+    "ci_upper": 0
+  },
+  "יז": {
+    "avg_seats": 0.0,
+    "prob_pass_threshold": 0.0,
+    "ci_lower": 0,
+    "ci_upper": 0
+  },
+  "צ": {
+    "avg_seats": 0.0,
+    "prob_pass_threshold": 0.0,
+    "ci_lower": 0,
+    "ci_upper": 0
+  },
+  "אצ": {
+    "avg_seats": 0.0,
+    "prob_pass_threshold": 0.0,
+    "ci_lower": 0,
+    "ci_upper": 0
+  },
+  "י": {
+    "avg_seats": 0.0,
+    "prob_pass_threshold": 0.0,
+    "ci_lower": 0,
+    "ci_upper": 0
+  },
+  "ת": {
+    "avg_seats": 0.0,
+    "prob_pass_threshold": 0.0,
+    "ci_lower": 0,
+    "ci_upper": 0
+  },
+  "זץ": {
+    "avg_seats": 0.0,
+    "prob_pass_threshold": 0.0,
+    "ci_lower": 0,
+    "ci_upper": 0
+  }
+}
