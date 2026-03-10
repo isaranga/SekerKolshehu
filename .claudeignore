@@ -1,0 +1,19 @@
+# Ignore git internals
+.git/
+
+# Ignore virtual environment
+.venv/
+
+# Ignore cached/generated files
+__pycache__/
+.pytest_cache/
+*.pyc
+*.egg-info/
+
+# Ignore build artifacts
+dist/
+build/
+
+# Ignore data and output directories (large files, not source code)
+data/
+output/
