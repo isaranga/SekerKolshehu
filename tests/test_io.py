@@ -5,6 +5,8 @@ from pathlib import Path
 from seker.io import (
     load_parties,
     load_poll,
+    load_seat_counts,
+    load_stats,
     discover_pending_polls,
     write_stats,
     write_seat_counts,
@@ -92,3 +94,17 @@ class TestWriteSeatCounts:
         assert len(rows) == 2
         assert rows[0][0] == "A"
         assert rows[0][1] == "100"
+
+
+class TestLoadOutputs:
+    def test_seat_counts_round_trip(self, tmp_path):
+        counts = {"מחל": [0] * 30 + [100] + [0] * 90, "B": [100] + [0] * 120}
+        path = tmp_path / "seat_counts.csv"
+        write_seat_counts(path, counts)
+        assert load_seat_counts(path) == counts
+
+    def test_stats_round_trip(self, tmp_path):
+        stats = {"מחל": {"avg_seats": 31.5, "ci_lower": 28, "ci_upper": 35}}
+        path = tmp_path / "stats.json"
+        write_stats(path, stats)
+        assert load_stats(path) == stats

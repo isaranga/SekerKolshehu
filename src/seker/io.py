@@ -16,6 +16,18 @@ def load_poll(path: str | Path) -> dict:
         return json.load(f)
 
 
+def load_stats(path: str | Path) -> dict:
+    with open(path, encoding="utf-8") as f:
+        return json.load(f)
+
+
+def load_seat_counts(path: str | Path) -> dict[str, list[int]]:
+    with open(path, encoding="utf-8", newline="") as f:
+        reader = csv.reader(f)
+        next(reader)
+        return {row[0]: [int(x) for x in row[1:]] for row in reader}
+
+
 def discover_pending_polls(
     data_dir: str | Path, output_dir: str | Path, election: str
 ) -> list[str]:

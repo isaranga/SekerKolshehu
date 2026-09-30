@@ -11,6 +11,7 @@ from seker.io import (
 )
 from seker.simulation import run_simulation
 from seker.stats import compute_stats, compute_seat_counts
+from seker.visualization import build_visualization
 
 logger = logging.getLogger(__name__)
 
@@ -55,6 +56,7 @@ def run_poll(
     poll_output = output_dir / election / poll_name
     write_stats(poll_output / "stats.json", stats)
     write_seat_counts(poll_output / "seat_counts.csv", counts)
+    build_visualization(data_dir, output_dir, election, poll_name)
     logger.info(f"Output written to {poll_output}")
 
 
@@ -79,6 +81,29 @@ def cmd_run(args: argparse.Namespace) -> None:
         logger.info("No pending polls found.")
 
 
+def cmd_viz(args: argparse.Namespace) -> None:
+    root = _project_root()
+    data_dir = root / "data"
+    output_dir = root / "output"
+
+    if args.election and args.poll:
+        targets = [(args.election, args.poll)]
+    else:
+        elections = [args.election] if args.election else sorted(
+            p.name for p in output_dir.iterdir() if p.is_dir()
+        )
+        targets = [
+            (election, poll_dir.name)
+            for election in elections
+            for poll_dir in sorted((output_dir / election).iterdir())
+            if (poll_dir / "stats.json").exists()
+        ]
+
+    for election, poll_name in targets:
+        path = build_visualization(data_dir, output_dir, election, poll_name)
+        logger.info(f"Visualization written to {path}")
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(prog="seker", description="Election poll Monte Carlo simulator")
     subparsers = parser.add_subparsers(dest="command")
@@ -89,9 +114,15 @@ def main(argv: list[str] | None = None) -> None:
     run_parser.add_argument("--iterations", type=int, default=100_000, help="Number of iterations")
     run_parser.add_argument("--seed", type=int, default=42, help="Random seed")
 
+    viz_parser = subparsers.add_parser("viz", help="Generate HTML visualizations of simulation output")
+    viz_parser.add_argument("--election", type=str, default=None, help="Election cycle name")
+    viz_parser.add_argument("--poll", type=str, default=None, help="Poll name (without .json)")
+
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     if args.command == "run":
         cmd_run(args)
+    elif args.command == "viz":
+        cmd_viz(args)
     else:
         parser.print_help()

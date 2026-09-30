@@ -14,5 +14,8 @@ seker = "seker.cli:main"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+seker = ["templates/*.html"]
+
 [dependency-groups]
 dev = ["pytest>=7.0"]

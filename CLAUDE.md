@@ -24,6 +24,10 @@ seker run
 
 # Run a specific poll (overrides existing output)
 seker run --election 25th-Knesset-2022 --poll 2022-10-27-kan11
+
+# Regenerate HTML visualizations (all existing outputs, or a specific poll)
+seker viz
+seker viz --election 25th-Knesset-2022 --poll 2022-10-27-kan11
 ```
 
 ## Architecture
@@ -33,12 +37,13 @@ This is a Monte Carlo simulator for Israeli election polls. It models seat alloc
 **Data flow:**
 1. Input: `/data/<election>/parties.json` + `/data/<election>/polls/<poll>.json`
 2. Simulation: Dirichlet-sampled vote fractions → `bader_ofer.allocate_seats()` × 100,000 iterations
-3. Output: `/output/<election>/<poll>/stats.json` + `seat_counts.csv`
+3. Output: `/output/<election>/<poll>/stats.json` + `seat_counts.csv` + `visualization.html`
 
 **Module responsibilities:**
 - `bader_ofer.py` — Pure seat allocation logic implementing the Bader-Ofer method (quota + surplus agreements)
 - `simulation.py` — Runs 100k Dirichlet-sampled iterations, calls `allocate_seats` per iteration
 - `stats.py` — Aggregates simulation results into mean, CI bounds, threshold probability
+- `visualization.py` — Builds a self-contained Hebrew (RTL) `visualization.html` per poll by injecting a JSON payload into `templates/visualization.html` (vanilla JS + inline SVG)
 - `io.py` — File I/O: loading parties/polls, writing outputs, discovering pending polls
 - `cli.py` — Entry point (`seker run`); resolves paths relative to project root (3 levels up from `cli.py`)
 
