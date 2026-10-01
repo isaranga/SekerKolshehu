@@ -3,7 +3,7 @@ import re
 from pathlib import Path
 
 from seker.cli import run_poll
-from seker.visualization import DATA_PLACEHOLDER, OUTPUT_FILENAME
+from seker.visualization import DATA_PLACEHOLDER, OUTPUT_FILENAME, build_payload
 
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
@@ -50,3 +50,16 @@ class TestVisualization:
 
         avgs = [p["avg_seats"] for p in parties]
         assert avgs == sorted(avgs, reverse=True)
+
+    def test_rare_pass_is_active_despite_rounded_probability(self):
+        stats = {
+            "A": {"avg_seats": 0.0, "prob_pass_threshold": 0.0, "ci_lower": 0, "ci_upper": 0},
+            "B": {"avg_seats": 0.0, "prob_pass_threshold": 0.0, "ci_lower": 0, "ci_upper": 0},
+        }
+        counts = {
+            "A": [99_998, 0, 0, 0, 2] + [0] * 116,
+            "B": [100_000] + [0] * 120,
+        }
+        payload = build_payload({}, {"results": {}}, stats, counts, "e", "p")
+        passed = {p["symbol"]: p["passed_any"] for p in payload["parties"]}
+        assert passed == {"A": True, "B": False}

@@ -155,6 +155,17 @@
   .legend span { display: inline-flex; align-items: center; gap: 6px; }
   .swatch { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
 
+  /* Explanation */
+  .about { margin-top: 16px; max-width: calc(72ch + 32px); }
+  .about summary { padding: 12px 16px; font-weight: 600; cursor: pointer; }
+  .about summary:hover { color: var(--series); }
+  .about-body { padding: 0 16px 8px; color: var(--text-secondary); text-align: justify; }
+  .about-body h3 { color: var(--text-primary); font-size: 15px; font-weight: 600; margin: 16px 0 4px; }
+  .about-body p { margin: 0 0 8px; }
+  .about-body ol, .about-body ul { margin: 0 0 8px; padding-inline-start: 20px; }
+  .about-body li { margin-bottom: 4px; }
+  .about-body strong { color: var(--text-primary); font-weight: 600; }
+
   #tooltip {
     position: fixed;
     pointer-events: none;
@@ -183,6 +194,32 @@
       <button type="button" id="theme-toggle"></button>
     </div>
     <dl class="meta card" id="meta"></dl>
+    <details class="about card">
+      <summary>מה רואים כאן? הסבר על הסימולציה</summary>
+      <div class="about-body">
+        <h3>למה סקר הוא לא תוצאה מדויקת</h3>
+        <p>סקר שואל מדגם של כמה מאות או אלפי אנשים, ולא את כל הבוחרים. לכן התוצאה שלו היא הערכה בלבד: מפלגה שקיבלה בסקר 4% יכולה לקבל בפועל 3.5% או 4.5%. ככל שהמדגם קטן יותר, אי־הוודאות גדולה יותר.</p>
+        <p>בבחירות לכנסת, הבדלים קטנים באחוזים יכולים לשנות הרבה במנדטים. מפלגה שנופלת מתחת לאחוז החסימה מאבדת את כל הקולות שלה, וזה משנה את חלוקת המנדטים לכל שאר המפלגות.</p>
+
+        <h3>מה הסימולציה עושה</h3>
+        <ol>
+          <li>מגרילים תוצאת בחירות אפשרית שקרובה לתוצאת הסקר. גודל המדגם קובע כמה רחוק ממנה ההגרלה יכולה להגיע.</li>
+          <li>מחלקים את 120 המנדטים לפי השיטה של הבחירות האמיתיות: אחוז החסימה (<span id="about-threshold"></span>), שיטת באדר־עופר והסכמי העודפים.</li>
+          <li>חוזרים על זה <span id="about-iterations"></span> פעמים, וסופרים כמה פעמים כל מפלגה קיבלה כל מספר מנדטים.</li>
+        </ol>
+
+        <h3>איך לקרוא את התוצאות</h3>
+        <ul>
+          <li><strong>ממוצע מנדטים</strong>: מספר המנדטים הממוצע של המפלגה בכל הסימולציות.</li>
+          <li><strong>רווח סמך 90%</strong>: הטווח שבו נפל מספר המנדטים ב־90% מהסימולציות. למשל, טווח של 8-12 אומר שרק ב־10% מהסימולציות המפלגה קיבלה פחות מ־8 מנדטים או יותר מ־12.</li>
+          <li><strong>סיכוי לעבור את אחוז החסימה</strong>: אחוז הסימולציות שבהן המפלגה נכנסה לכנסת.</li>
+          <li><strong>התפלגות מנדטים</strong>: כל עמודה בגרף מראה את הסיכוי של המפלגה לקבל מספר מנדטים מסוים. ככל שההתפלגות רחבה יותר, אי־הוודאות גדולה יותר.</li>
+        </ul>
+
+        <h3>מה הסימולציה לא לוקחת בחשבון</h3>
+        <p>הסימולציה מודדת רק את אי־הוודאות שנובעת מכך שהסקר נערך על מדגם. היא לא מתחשבת בהטיות של מכון הסקרים, במצביעים מתלבטים, בשיעור ההצבעה או בשינויים בדעת הקהל עד יום הבחירות. לכן אי־הוודאות האמיתית גדולה יותר ממה שמוצג כאן.</p>
+      </div>
+    </details>
   </header>
 
   <section>
@@ -312,6 +349,9 @@ function renderHeader() {
     .filter(([, v]) => v)
     .map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`)
     .join("");
+
+  document.getElementById("about-threshold").textContent = fmtPct(DATA.threshold, 2);
+  document.getElementById("about-iterations").textContent = fmtInt(DATA.iterations);
 }
 
 /* ---------- Summary table ---------- */
@@ -434,8 +474,8 @@ function renderHistograms(active) {
   });
 }
 
-const active = DATA.parties.filter(p => p.prob_pass_threshold > 0);
-const inactive = DATA.parties.filter(p => p.prob_pass_threshold === 0);
+const active = DATA.parties.filter(p => p.passed_any);
+const inactive = DATA.parties.filter(p => !p.passed_any);
 renderHeader();
 renderCiAxis();
 renderTable(active, inactive);

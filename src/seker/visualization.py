@@ -25,6 +25,8 @@ def build_payload(
             "poll_share": results.get(symbol, 0.0),
             **party_stats,
             "counts": seat_counts[symbol],
+            # From raw counts: prob_pass_threshold is rounded and can hide rare passes
+            "passed_any": seat_counts[symbol][0] < sum(seat_counts[symbol]),
         }
         for symbol, party_stats in stats.items()
     ]
