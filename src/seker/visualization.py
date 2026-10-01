@@ -7,6 +7,8 @@ from seker.io import load_parties, load_poll, load_seat_counts, load_stats
 
 DATA_PLACEHOLDER = "/*__DATA__*/null"
 OUTPUT_FILENAME = "visualization.html"
+# Parties passing the threshold in fewer than this fraction of simulations go to the footnote
+MIN_PASS_FRACTION = 0.001
 
 
 def build_payload(
@@ -26,12 +28,13 @@ def build_payload(
             **party_stats,
             "counts": seat_counts[symbol],
             # From raw counts: prob_pass_threshold is rounded and can hide rare passes
-            "passed_any": seat_counts[symbol][0] < sum(seat_counts[symbol]),
+            "pass_count": sum(seat_counts[symbol]) - seat_counts[symbol][0],
         }
         for symbol, party_stats in stats.items()
     ]
     parties.sort(key=lambda p: (p["avg_seats"], p["poll_share"]), reverse=True)
     iterations = sum(next(iter(seat_counts.values()))) if seat_counts else 0
+    min_pass_count = iterations * MIN_PASS_FRACTION
     return {
         "election": election,
         "poll_name": poll_name,
@@ -43,6 +46,8 @@ def build_payload(
             "link": poll.get("link"),
         },
         "iterations": iterations,
+        "min_pass_fraction": MIN_PASS_FRACTION,
+        "min_pass_count": min_pass_count,
         "threshold": THRESHOLD,
         "total_seats": TOTAL_SEATS,
         "parties": parties,

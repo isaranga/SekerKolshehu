@@ -51,7 +51,7 @@ class TestVisualization:
         avgs = [p["avg_seats"] for p in parties]
         assert avgs == sorted(avgs, reverse=True)
 
-    def test_rare_pass_is_active_despite_rounded_probability(self):
+    def test_pass_count_from_raw_counts(self):
         stats = {
             "A": {"avg_seats": 0.0, "prob_pass_threshold": 0.0, "ci_lower": 0, "ci_upper": 0},
             "B": {"avg_seats": 0.0, "prob_pass_threshold": 0.0, "ci_lower": 0, "ci_upper": 0},
@@ -61,5 +61,6 @@ class TestVisualization:
             "B": [100_000] + [0] * 120,
         }
         payload = build_payload({}, {"results": {}}, stats, counts, "e", "p")
-        passed = {p["symbol"]: p["passed_any"] for p in payload["parties"]}
-        assert passed == {"A": True, "B": False}
+        passed = {p["symbol"]: p["pass_count"] for p in payload["parties"]}
+        assert passed == {"A": 2, "B": 0}
+        assert payload["min_pass_count"] == 100
