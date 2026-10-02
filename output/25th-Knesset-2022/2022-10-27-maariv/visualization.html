@@ -340,12 +340,10 @@ function renderHeader() {
     `סקר ${esc(m.media ?? DATA.poll_name)}${date ? ` · ${ltr(esc(date))}` : ""}`;
 
   const items = [
-    ["תאריך", date && ltr(esc(date))],
+    ["תאריך הסקר", date && ltr(esc(date))],
     ["מזמין הסקר", m.media && esc(m.media)],
-    ["מכון סקרים", m.pollster && `<bdi>${esc(m.pollster)}</bdi>`],
-    ["גודל מדגם", m.sample_size && fmtInt(m.sample_size)],
-    ["מספר סימולציות", fmtInt(DATA.iterations)],
-    ["אחוז החסימה", fmtPct(DATA.threshold, 2)],
+    ["מכון הסקרים", m.pollster && `<bdi>${esc(m.pollster)}</bdi>`],
+    ["גודל המדגם", m.sample_size && fmtInt(m.sample_size)],
     ["מקור", m.link && `<a href="${esc(m.link)}" target="_blank" rel="noopener">קישור לסקר</a>`],
   ];
   document.getElementById("meta").innerHTML = items
