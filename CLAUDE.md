@@ -5,10 +5,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-# Install in development mode (from repo root)
-pip install -e ".[dev]"
-# or with uv/pip with dev deps:
-pip install -e . && pip install pytest
+# Install in development mode with dev deps (from repo root)
+uv sync
+# or with pip (>= 25.1, which supports dependency groups):
+pip install -e . --group dev
 
 # Run all tests
 pytest
