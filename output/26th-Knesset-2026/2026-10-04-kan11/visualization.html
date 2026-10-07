@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>סימולציית סקר</title>
+<script>
+  // Apply a saved theme choice before first paint
+  try {
+    const saved = localStorage.getItem("seker-theme");
+    if (saved === "light" || saved === "dark") document.documentElement.dataset.theme = saved;
+  } catch {}
+</script>
+<style>
+  :root {
+    color-scheme: light;
+    --page: #f9f9f7;
+    --surface: #fcfcfb;
+    --text-primary: #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted: #898781;
+    --grid: #e1e0d9;
+    --axis: #c3c2b7;
+    --border: rgba(11, 11, 11, 0.10);
+    --series: #2a78d6;
+    --series-soft: #86b6ef;
+    --highlight: rgba(42, 120, 214, 0.10);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --page: #0d0d0d;
+      --surface: #1a1a19;
+      --text-primary: #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted: #898781;
+      --grid: #2c2c2a;
+      --axis: #383835;
+      --border: rgba(255, 255, 255, 0.10);
+      --series: #3987e5;
+      --series-soft: #184f95;
+      --highlight: rgba(57, 135, 229, 0.16);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --page: #0d0d0d;
+    --surface: #1a1a19;
+    --text-primary: #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted: #898781;
+    --grid: #2c2c2a;
+    --axis: #383835;
+    --border: rgba(255, 255, 255, 0.10);
+    --series: #3987e5;
+    --series-soft: #184f95;
+    --highlight: rgba(57, 135, 229, 0.16);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--page);
+    color: var(--text-primary);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+  main { max-width: 1120px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { font-size: 26px; font-weight: 600; margin: 0 0 4px; }
+  h2 { font-size: 18px; font-weight: 600; margin: 40px 0 4px; }
+  .section-note { color: var(--text-secondary); font-size: 14px; margin: 0 0 16px; }
+  .header-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+  #theme-toggle {
+    flex: none;
+    background: var(--surface);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 12px;
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  #theme-toggle:hover { background: var(--highlight); }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+
+  /* Metadata */
+  .meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1px;
+    margin: 24px 0 0;
+    overflow: hidden;
+    background: var(--border);
+  }
+  .meta > div { background: var(--surface); padding: 12px 16px; }
+  .meta dt { color: var(--text-secondary); font-size: 13px; }
+  .meta dd { margin: 2px 0 0; font-size: 17px; font-weight: 600; overflow-wrap: anywhere; }
+  .meta a { color: var(--series); }
+
+  /* Summary table */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  th, td { padding: 8px 12px; text-align: start; white-space: nowrap; }
+  th {
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 500;
+    border-bottom: 1px solid var(--axis);
+    vertical-align: bottom;
+  }
+  td { border-bottom: 1px solid var(--grid); }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr { cursor: pointer; }
+  tbody tr:hover td { background: var(--highlight); }
+  td.num, th.num { text-align: right; }
+  .party-name { font-weight: 600; }
+  .symbol { color: var(--text-muted); font-size: 13px; margin-inline-start: 6px; }
+  td.ci-chart, th.ci-chart { padding-block: 4px; width: 260px; min-width: 260px; }
+  .footnote { color: var(--text-secondary); font-size: 14px; padding: 12px 16px 0; margin: 0; }
+
+  /* Histograms */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+  }
+  .hist { padding: 16px 16px 8px; scroll-margin-top: 16px; transition: box-shadow 0.3s; }
+  .hist.flash { box-shadow: 0 0 0 2px var(--series); }
+  .hist h3 { font-size: 16px; font-weight: 600; margin: 0; }
+  .hist .summary { color: var(--text-secondary); font-size: 13px; margin: 2px 0 8px; }
+  svg { display: block; width: 100%; height: auto; overflow: visible; }
+  svg text { fill: var(--text-muted); font-size: 10px; font-variant-numeric: tabular-nums; }
+  .gridline { stroke: var(--grid); stroke-width: 1; }
+  .baseline { stroke: var(--axis); stroke-width: 1; }
+  .bar-in { fill: var(--series); }
+  .bar-out { fill: var(--series-soft); }
+  .hit { fill: transparent; }
+  .hover-band.on { fill: var(--highlight); }
+  .hover-band { fill: transparent; pointer-events: none; }
+  .ci-track { stroke: var(--grid); stroke-width: 1; }
+  .ci-bar { fill: var(--series); }
+  .ci-dot { fill: var(--text-primary); stroke: var(--surface); stroke-width: 2; }
+
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 16px;
+    color: var(--text-secondary); font-size: 13px; margin-bottom: 12px;
+  }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .swatch { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+
+  /* Explanation */
+  .about { margin-top: 16px; max-width: calc(72ch + 32px); }
+  .about summary { padding: 12px 16px; font-weight: 600; cursor: pointer; }
+  .about summary:hover { color: var(--series); }
+  .about-body { padding: 0 16px 8px; color: var(--text-secondary); text-align: justify; }
+  .about-body h3 { color: var(--text-primary); font-size: 15px; font-weight: 600; margin: 16px 0 4px; }
+  .about-body p { margin: 0 0 8px; }
+  .about-body ol, .about-body ul { margin: 0 0 8px; padding-inline-start: 20px; }
+  .about-body li { margin-bottom: 4px; }
+  .about-body strong { color: var(--text-primary); font-weight: 600; }
+
+  #tooltip {
+    position: fixed;
+    pointer-events: none;
+    background: var(--surface);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 13px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    opacity: 0;
+    transition: opacity 0.1s;
+    z-index: 10;
+    white-space: nowrap;
+  }
+  #tooltip.on { opacity: 1; }
+  #tooltip .tt-value { font-weight: 600; }
+  #tooltip .tt-label { color: var(--text-secondary); }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="header-top">
+      <h1 id="title"></h1>
+      <button type="button" id="theme-toggle"></button>
+    </div>
+    <dl class="meta card" id="meta"></dl>
+    <details class="about card">
+      <summary>מה רואים כאן? הסבר על הסימולציה</summary>
+      <div class="about-body">
+        <h3>למה סקר הוא לא תוצאה מדויקת</h3>
+        <p>סקר שואל מדגם של כמה מאות או אלפי אנשים, ולא את כל הבוחרים, ולכן התוצאה שלו היא הערכה בלבד: מפלגה שקיבלה בסקר 10 מנדטים עשויה לקבל בפועל בין 8 ל־12 מנדטים. ככל שהמדגם קטן יותר, אי־הוודאות גדולה יותר.</p>
+        <p>בבחירות לכנסת, הבדלים קטנים באחוזים יכולים לשנות הרבה במנדטים. מפלגה שנופלת מתחת לאחוז החסימה מאבדת את כל הקולות שלה, וזה משנה את חלוקת המנדטים לכל שאר המפלגות.</p>
+        <p>למרות זאת, הסקרים מציגים לכל מפלגה מספר מנדטים יחיד ולא טווח של מנדטים. הם גם לא מציינים מה הסיכוי של מפלגה שנמצאת סביב אחוז החסימה לעבור אותו. הסוקרים אמנם נוהגים לציין את טעות הדגימה בכל סקר שלהם, אבל קשה לגזור ממנה את טווח המנדטים האפשרי של כל מפלגה.</p>
+        <p>הסימולציה נועדה לענות על השאלות האלה ולהמחיש את אי־הוודאות שיש בכל סקר.</p>
+
+        <h3>מה הסימולציה עושה</h3>
+        <ol>
+          <li>מגרילים תוצאת בחירות אפשרית שקרובה לתוצאת הסקר. גודל המדגם קובע כמה רחוק ממנה ההגרלה יכולה להגיע.</li>
+          <li>מחלקים את 120 המנדטים לפי השיטה של הבחירות האמיתיות: אחוז החסימה (<span id="about-threshold"></span>), שיטת באדר־עופר והסכמי העודפים.</li>
+          <li>חוזרים על זה <span id="about-iterations"></span> פעמים, וסופרים כמה פעמים כל מפלגה קיבלה כל מספר מנדטים.</li>
+        </ol>
+
+        <h3>איך לקרוא את התוצאות</h3>
+        <ul>
+          <li><strong>תוצאת הסקר</strong>: אחוז הקולות שהמפלגה קיבלה בסקר המקורי.</li>
+          <li><strong>ממוצע מנדטים</strong>: מספר המנדטים הממוצע של המפלגה בכל הסימולציות.</li>
+          <li><strong>רווח סמך 90%</strong>: הטווח שבו נפל מספר המנדטים ב־90% מהסימולציות. למשל, טווח של 8-12 אומר שרק ב־10% מהסימולציות המפלגה קיבלה פחות מ־8 מנדטים או יותר מ־12.</li>
+          <li><strong>סיכוי לעבור את אחוז החסימה</strong>: אחוז הסימולציות שבהן המפלגה נכנסה לכנסת.</li>
+          <li><strong>התפלגות מנדטים</strong>: כל עמודה בגרף מראה את הסיכוי של המפלגה לקבל מספר מנדטים מסוים. ככל שההתפלגות רחבה יותר, אי־הוודאות גדולה יותר.</li>
+        </ul>
+
+        <h3>מה הסימולציה לא לוקחת בחשבון</h3>
+        <p>הסימולציה מודדת רק את אי־הוודאות שנובעת מכך שהסקר נערך על מדגם. היא לא מתחשבת בהטיות של מכון הסקרים, במצביעים מתלבטים, בשיעור ההצבעה או בשינויים בדעת הקהל עד יום הבחירות. לכן אי־הוודאות האמיתית גדולה יותר ממה שמוצג כאן.</p>
+      </div>
+    </details>
+  </header>
+
+  <section>
+    <h2>תוצאות לפי מפלגה</h2>
+    <p class="section-note">לחיצה על שורה מובילה להתפלגות המנדטים של המפלגה. רווח הסמך מוצג כפס, והממוצע כנקודה.</p>
+    <div class="card">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>מפלגה</th>
+              <th class="num">תוצאת הסקר</th>
+              <th class="num">ממוצע מנדטים</th>
+              <th class="num">רווח סמך 90%</th>
+              <th class="num">סיכוי לעבור את אחוז החסימה</th>
+              <th class="ci-chart" id="ci-axis"></th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+      <p class="footnote" id="footnote" hidden></p>
+      <div style="height: 12px"></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>התפלגות מנדטים</h2>
+    <p class="section-note">ההסתברות לכל מספר מנדטים (0–50), לפי תוצאות הסימולציות.</p>
+    <div class="legend">
+      <span><i class="swatch" style="background: var(--series)"></i>בתוך רווח הסמך 90%</span>
+      <span><i class="swatch" style="background: var(--series-soft)"></i>מחוץ לרווח הסמך</span>
+    </div>
+    <div class="grid" id="hists"></div>
+  </section>
+</main>
+<div id="tooltip" role="tooltip"></div>
+
+<script>
+const DATA = {"election": "26th-Knesset-2026", "poll_name": "2026-10-04-kan11", "meta": {"date": "2026-10-04", "media": "כאן 11", "pollster": "Kantar", "sample_size": 553, "link": "https://www.gov.il/BlobFolder/dynamiccollectorresultitem/knesset_election97/he/Survey_4188.pdf"}, "iterations": 100000, "min_pass_fraction": 0.001, "min_pass_count": 100.0, "threshold": 0.0325, "total_seats": 120, "parties": [{"symbol": "דרך", "name": "ישר!‏", "poll_share": 0.18, "avg_seats": 23.99, "prob_pass_threshold": 1.0, "ci_lower": 20, "ci_upper": 28, "counts": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 16, 107, 463, 1583, 4068, 7774, 12348, 16380, 17104, 15160, 10963, 7023, 3969, 1857, 784, 274, 90, 29, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "pass_count": 100000}, {"symbol": "מחל", "name": "הליכוד", "poll_share": 0.162, "avg_seats": 21.59, "prob_pass_threshold": 1.0, "ci_lower": 18, "ci_upper": 25, "counts": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 18, 116, 527, 2002, 5044, 9570, 14583, 17833, 17370, 13749, 9501, 5327, 2560, 1196, 423, 122, 43, 10, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "pass_count": 100000}, {"symbol": "רק", "name": "ביחד", "poll_share": 0.094, "avg_seats": 12.39, "prob_pass_threshold": 1.0, "ci_lower": 10, "ci_upper": 15, "counts": [0, 0, 0, 0, 0, 0, 2, 59, 614, 3291, 9563, 18009, 22756, 20393, 13987, 7006, 2984, 964, 286, 62, 22, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "pass_count": 100000}, {"symbol": "ל", "name": "ישראל ביתנו", "poll_share": 0.069, "avg_seats": 8.95, "prob_pass_threshold": 1.0, "ci_lower": 7, "ci_upper": 12, "counts": [1, 0, 0, 0, 12, 486, 3556, 12547, 23179, 26026, 19166, 9817, 3708, 1137, 301, 48, 13, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "pass_count": 99999}, {"symbol": "ודם", "name": "הרשימה המשותפת", "poll_share": 0.063, "avg_seats": 8.19, "prob_pass_threshold": 0.9998, "ci_lower": 6, "ci_upper": 11, "counts": [16, 0, 0, 0, 108, 1823, 9275, 21569, 27650, 21792, 11653, 4456, 1324, 278, 48, 7, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "pass_count": 99984}, {"symbol": "אמת", "name": "הדמוקרטים", "poll_share": 0.063, "avg_seats": 8.08, "prob_pass_threshold": 0.9998, "ci_lower": 6, "ci_upper": 11, "counts": [21, 0, 0, 0, 147, 2308, 10412, 22989, 27904, 20344, 10675, 3782, 1098, 258, 51, 9, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "pass_count": 99979}, {"symbol": "ב", "name": "עוצמה יהודית", "poll_share": 0.063, "avg_seats": 7.95, "prob_pass_threshold": 0.9998, "ci_lower": 6, "ci_upper": 10, "counts": [24, 0, 0, 0, 213, 2749, 12052, 24206, 27558, 19543, 9425, 3167, 853, 179, 24, 5, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "pass_count": 99976}, {"symbol": "ג", "name": "יהדות התורה", "poll_share": 0.063, "avg_seats": 7.95, "prob_pass_threshold": 0.9999, "ci_lower": 6, "ci_upper": 10, "counts": [12, 0, 0, 0, 227, 2745, 12026, 24419, 27475, 19523, 9192, 3331, 846, 167, 34, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "pass_count": 99988}, {"symbol": "שס", "name": "ש״ס", "poll_share": 0.063, "avg_seats": 7.94, "prob_pass_threshold": 0.9998, "ci_lower": 6, "ci_upper": 10, "counts": [18, 0, 0, 0, 251, 2712, 12063, 24394, 27792, 19360, 9205, 3160, 823, 193, 24, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "pass_count": 99982}, {"symbol": "ט", "name": "הציונות הדתית וזהות", "poll_share": 0.046, "avg_seats": 5.58, "prob_pass_threshold": 0.9481, "ci_lower": 0, "ci_upper": 8, "counts": [5194, 0, 0, 0, 9620, 29013, 29979, 17533, 6602, 1711, 290, 49, 8, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "pass_count": 94806}, {"symbol": "עם", "name": "רע״ם", "poll_share": 0.039, "avg_seats": 4.1, "prob_pass_threshold": 0.7784, "ci_lower": 0, "ci_upper": 7, "counts": [22156, 0, 0, 0, 17109, 33198, 19214, 6537, 1509, 244, 30, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "pass_count": 77844}, {"symbol": "די", "name": "המילואימניקים והכלכלית", "poll_share": 0.034, "avg_seats": 2.57, "prob_pass_threshold": 0.5466, "ci_lower": 0, "ci_upper": 6, "counts": [45339, 0, 0, 0, 25618, 20999, 6585, 1267, 168, 22, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "pass_count": 54661}, {"symbol": "ך", "name": "עמך ישראל", "poll_share": 0.026, "avg_seats": 0.72, "prob_pass_threshold": 0.1656, "ci_lower": 0, "ci_upper": 5, "counts": [83445, 0, 0, 0, 11403, 4400, 681, 66, 4, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "pass_count": 16555}, {"symbol": "כן", "name": "כחול לבן", "poll_share": 0.013, "avg_seats": 0.0, "prob_pass_threshold": 0.0011, "ci_lower": 0, "ci_upper": 0, "counts": [99893, 0, 0, 0, 96, 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "pass_count": 107}, {"symbol": "זך", "name": "הציבור החרדי", "poll_share": 0.009, "avg_seats": 0.0, "prob_pass_threshold": 0.0001, "ci_lower": 0, "ci_upper": 0, "counts": [99990, 0, 0, 0, 8, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "pass_count": 10}, {"symbol": "צבי", "name": "תנועת אחי", "poll_share": 0.007, "avg_seats": 0.0, "prob_pass_threshold": 0.0, "ci_lower": 0, "ci_upper": 0, "counts": [100000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "pass_count": 0}, {"symbol": "נר", "name": "צבע שחור", "poll_share": 0.006, "avg_seats": 0.0, "prob_pass_threshold": 0.0, "ci_lower": 0, "ci_upper": 0, "counts": [99999, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "pass_count": 1}]};
+const MAX_SEATS_SHOWN = 50;
+const SVG_NS = "http://www.w3.org/2000/svg";
+
+const fmtInt = n => n.toLocaleString("he-IL");
+const fmtPct = (x, digits = 1) => (x * 100).toLocaleString("he-IL", {
+  minimumFractionDigits: digits, maximumFractionDigits: digits,
+}) + "%";
+const fmtNum = (x, digits = 1) => x.toLocaleString("he-IL", {
+  minimumFractionDigits: digits, maximumFractionDigits: digits,
+});
+const ltr = s => `<bdi dir="ltr">${s}</bdi>`;
+
+/* ---------- Theme toggle ---------- */
+const themeToggle = document.getElementById("theme-toggle");
+const currentTheme = () => document.documentElement.dataset.theme
+  ?? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+const updateThemeToggle = () => {
+  themeToggle.textContent = currentTheme() === "dark" ? "מצב בהיר" : "מצב כהה";
+};
+themeToggle.addEventListener("click", () => {
+  const next = currentTheme() === "dark" ? "light" : "dark";
+  document.documentElement.dataset.theme = next;
+  try { localStorage.setItem("seker-theme", next); } catch {}
+  updateThemeToggle();
+});
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", updateThemeToggle);
+updateThemeToggle();
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({
+  "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+}[c]));
+const rangeText = p => ltr(`${p.ci_lower}–${p.ci_upper}`);
+
+function el(tag, attrs = {}, parent) {
+  const node = document.createElementNS(SVG_NS, tag);
+  for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v);
+  if (parent) parent.appendChild(node);
+  return node;
+}
+
+// Bar path with a 4px rounded top, square at the baseline.
+function barPath(x, y, w, h, r = 4) {
+  if (h <= 0) return "";
+  r = Math.min(r, w / 2, h);
+  return `M${x},${y + h}V${y + r}Q${x},${y} ${x + r},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + h}Z`;
+}
+
+function niceMax(v) {
+  const steps = [0.02, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5, 0.6, 0.8, 1];
+  return steps.find(s => s >= v) ?? 1;
+}
+
+/* ---------- Tooltip ---------- */
+const tooltip = document.getElementById("tooltip");
+function showTooltip(evt, html) {
+  tooltip.innerHTML = html;
+  tooltip.classList.add("on");
+  const pad = 12;
+  const rect = tooltip.getBoundingClientRect();
+  let x = evt.clientX + pad;
+  let y = evt.clientY - rect.height - pad;
+  if (x + rect.width > window.innerWidth - 8) x = evt.clientX - rect.width - pad;
+  if (y < 8) y = evt.clientY + pad;
+  tooltip.style.left = `${Math.max(8, x)}px`;
+  tooltip.style.top = `${y}px`;
+}
+function hideTooltip() { tooltip.classList.remove("on"); }
+
+/* ---------- Header ---------- */
+function renderHeader() {
+  const m = DATA.meta;
+  // ISO yyyy-mm-dd → dd/mm/yyyy
+  const date = m.date && String(m.date).replace(/^(\d{4})-(\d{2})-(\d{2})$/, "$3/$2/$1");
+  document.title = `${m.media ?? DATA.poll_name} ${date ?? ""} — סימולציית סקר`;
+  document.getElementById("title").innerHTML =
+    `סקר ${esc(m.media ?? DATA.poll_name)}${date ? ` · ${ltr(esc(date))}` : ""}`;
+
+  const items = [
+    ["תאריך הסקר", date && ltr(esc(date))],
+    ["מזמין הסקר", m.media && esc(m.media)],
+    ["מכון הסקרים", m.pollster && `<bdi>${esc(m.pollster)}</bdi>`],
+    ["גודל המדגם", m.sample_size && fmtInt(m.sample_size)],
+    ["מקור", m.link && `<a href="${esc(m.link)}" target="_blank" rel="noopener">קישור לסקר</a>`],
+  ];
+  document.getElementById("meta").innerHTML = items
+    .filter(([, v]) => v)
+    .map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`)
+    .join("");
+
+  document.getElementById("about-threshold").textContent = fmtPct(DATA.threshold, 2);
+  document.getElementById("about-iterations").textContent = fmtInt(DATA.iterations);
+}
+
+/* ---------- Summary table ---------- */
+const CI_W = 240, CI_H = 24, CI_PAD = 8;
+const ciX = s => CI_PAD + (Math.min(s, MAX_SEATS_SHOWN) / MAX_SEATS_SHOWN) * (CI_W - 2 * CI_PAD);
+
+function renderCiAxis() {
+  const svg = el("svg", { viewBox: `0 0 ${CI_W} 16`, width: CI_W, dir: "ltr", "aria-hidden": "true" });
+  for (let s = 0; s <= MAX_SEATS_SHOWN; s += 10) {
+    el("text", { x: ciX(s), y: 12, "text-anchor": "middle" }, svg).textContent = s;
+  }
+  document.getElementById("ci-axis").appendChild(svg);
+}
+
+function ciSvg(p) {
+  const svg = el("svg", {
+    viewBox: `0 0 ${CI_W} ${CI_H}`, width: CI_W, dir: "ltr", role: "img",
+    "aria-label": `רווח סמך ${p.ci_lower} עד ${p.ci_upper}, ממוצע ${p.avg_seats}`,
+  });
+  for (let s = 0; s <= MAX_SEATS_SHOWN; s += 10) {
+    el("line", { x1: ciX(s), x2: ciX(s), y1: 2, y2: CI_H - 2, class: "ci-track" }, svg);
+  }
+  const x0 = ciX(p.ci_lower), x1 = ciX(p.ci_upper);
+  el("rect", { x: x0 - 2, y: CI_H / 2 - 4, width: Math.max(4, x1 - x0 + 4), height: 8, rx: 4, class: "ci-bar" }, svg);
+  el("circle", { cx: ciX(p.avg_seats), cy: CI_H / 2, r: 5, class: "ci-dot" }, svg);
+  return svg;
+}
+
+function renderTable(active, inactive) {
+  const tbody = document.getElementById("rows");
+  active.forEach((p, i) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td><span class="party-name">${esc(p.name)}</span><span class="symbol">${esc(p.symbol)}</span></td>
+      <td class="num">${fmtPct(p.poll_share)}</td>
+      <td class="num">${fmtNum(p.avg_seats, 2)}</td>
+      <td class="num">${rangeText(p)}</td>
+      <td class="num">${fmtPct(p.prob_pass_threshold)}</td>
+      <td class="ci-chart"></td>`;
+    tr.lastElementChild.appendChild(ciSvg(p));
+    tr.addEventListener("click", () => {
+      const card = document.getElementById(`hist-${i}`);
+      card.scrollIntoView({ behavior: "smooth", block: "start" });
+      card.classList.add("flash");
+      setTimeout(() => card.classList.remove("flash"), 1200);
+    });
+    tbody.appendChild(tr);
+  });
+
+  if (inactive.length) {
+    const fn = document.getElementById("footnote");
+    fn.hidden = false;
+    fn.innerHTML = `עברו את אחוז החסימה בפחות מ־${fmtPct(DATA.min_pass_fraction)} מהסימולציות (תוצאות הסקר בסוגריים): ` + inactive
+      .map(p => `${esc(p.name)} (${fmtPct(p.poll_share)})`)
+      .join(", ");
+  }
+}
+
+/* ---------- Histograms ---------- */
+const H_W = 320, H_H = 150;
+const M = { top: 8, right: 8, bottom: 20, left: 32 };
+
+function histSvg(p) {
+  const total = p.counts.reduce((a, b) => a + b, 0) || 1;
+  const probs = p.counts.slice(0, MAX_SEATS_SHOWN + 1).map(c => c / total);
+  const yMax = niceMax(Math.max(...probs));
+  const plotW = H_W - M.left - M.right, plotH = H_H - M.top - M.bottom;
+  const band = plotW / (MAX_SEATS_SHOWN + 1);
+  const barW = Math.max(1, band - 2);
+  const x = s => M.left + s * band;
+  const y = v => M.top + plotH - (v / yMax) * plotH;
+
+  const svg = el("svg", {
+    viewBox: `0 0 ${H_W} ${H_H}`, dir: "ltr", role: "img",
+    "aria-label": `התפלגות מנדטים של ${p.name}`,
+  });
+
+  // Y gridlines + ticks
+  for (const t of [yMax / 2, yMax]) {
+    el("line", { x1: M.left, x2: H_W - M.right, y1: y(t), y2: y(t), class: "gridline" }, svg);
+    el("text", { x: M.left - 4, y: y(t) + 3, "text-anchor": "end" }, svg).textContent =
+      `${Math.round(t * 100)}%`;
+  }
+  // X ticks
+  for (let s = 0; s <= MAX_SEATS_SHOWN; s += 10) {
+    el("text", { x: x(s) + band / 2, y: H_H - 6, "text-anchor": "middle" }, svg).textContent = s;
+  }
+
+  // Bars + hover targets
+  probs.forEach((v, s) => {
+    const inCi = s >= p.ci_lower && s <= p.ci_upper;
+    const top = y(v);
+    const d = barPath(x(s) + (band - barW) / 2, top, barW, M.top + plotH - top, Math.min(4, barW / 2));
+    if (d) el("path", { d, class: inCi ? "bar-in" : "bar-out" }, svg);
+  });
+  el("line", { x1: M.left, x2: H_W - M.right, y1: M.top + plotH, y2: M.top + plotH, class: "baseline" }, svg);
+
+  // Hit targets: full-height column per seat count
+  probs.forEach((v, s) => {
+    const hit = el("rect", { x: x(s), y: M.top, width: band, height: plotH, class: "hit" }, svg);
+    const hover = el("rect", { x: x(s), y: M.top, width: band, height: plotH, class: "hover-band" }, svg);
+    const html = `<span class="tt-value">${fmtPct(v)}</span> <span class="tt-label">· ${s} מנדטים</span>`;
+    hit.addEventListener("mousemove", e => { hover.classList.add("on"); showTooltip(e, html); });
+    hit.addEventListener("mouseleave", () => { hover.classList.remove("on"); hideTooltip(); });
+  });
+  return svg;
+}
+
+function renderHistograms(active) {
+  const grid = document.getElementById("hists");
+  active.forEach((p, i) => {
+    const card = document.createElement("article");
+    card.className = "card hist";
+    card.id = `hist-${i}`;
+    card.innerHTML = `
+      <h3>${esc(p.name)} <span class="symbol">${esc(p.symbol)}</span></h3>
+      <p class="summary">ממוצע ${fmtNum(p.avg_seats, 2)} · רווח סמך 90%: ${rangeText(p)} · סיכוי לעבור את החסימה: ${fmtPct(p.prob_pass_threshold)}</p>`;
+    card.appendChild(histSvg(p));
+    grid.appendChild(card);
+  });
+}
+
+const active = DATA.parties.filter(p => p.pass_count >= DATA.min_pass_count);
+const inactive = DATA.parties.filter(p => p.pass_count < DATA.min_pass_count);
+renderHeader();
+renderCiAxis();
+renderTable(active, inactive);
+renderHistograms(active);
+</script>
+</body>
+</html>
