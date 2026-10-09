@@ -8,7 +8,7 @@ The objective of this project is to move beyond static projections. Given a spec
 
 ## DATA SOURCE
 
-1. All project data is consolidated within the `/data` folder. 
+1. All project data is consolidated within the `/data` folder.
 2. There is a subfolder for each election cycle, e.g. `/data/25th-Knesset-2022`.
 3. Each election cycle subfolder includes:
 	* `parties.json` - Mapping from party symbols to party names, and the list of surplus agreements. Parties are uniquely identified by their Hebrew symbols (1–4 letters).
@@ -17,7 +17,7 @@ The objective of this project is to move beyond static projections. Given a spec
 ## LOGIC
 
 1. Seat Allocation: The distribution of seats among parties will be calculated using the Bader-Ofer method, as detailed in the next section.
-2. For each poll, use Monte Carlo simulations to calculate a probability distribution for each party, and establish a 90% confidence interval for their final seat count. 
+2. For each poll, use Monte Carlo simulations to calculate a probability distribution for each party, and establish a 90% confidence interval for their final seat count.
 3. Parameters for Monte Carlo simulations:
 	* Distribution: Dirichlet
 	* Concentration parameter: α_i ​= P_i ​× N, where P_i​ is the party fraction and N is the sample size.

@@ -72,8 +72,11 @@ def main():
         units = normalize(raw)
     else:
         if raw_sum != 100 and "--raw" not in sys.argv:
-            print(f"Raw results sum to {raw_sum}%, not 100%. Re-run with --normalize "
-                  "after confirming with the user.", file=sys.stderr)
+            print(
+                f"Raw results sum to {raw_sum}%, not 100%. Re-run with --normalize "
+                "after confirming with the user.",
+                file=sys.stderr,
+            )
             sys.exit(2)
         units = {k: round(v * UNITS / 100) for k, v in raw.items()}
 

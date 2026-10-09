@@ -3,40 +3,33 @@ import json
 from pathlib import Path
 
 from seker.io import (
+    discover_pending_polls,
     load_parties,
     load_poll,
     load_seat_counts,
     load_stats,
-    discover_pending_polls,
-    write_stats,
     write_seat_counts,
+    write_stats,
 )
-
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 
 
 class TestLoadParties:
     def test_loads_symbols_and_names(self):
-        symbols, agreements = load_parties(
-            DATA_DIR / "25th-Knesset-2022" / "parties.json"
-        )
+        symbols, agreements = load_parties(DATA_DIR / "25th-Knesset-2022" / "parties.json")
         assert symbols["מחל"] == "הליכוד"
         assert isinstance(agreements, list)
         assert all(isinstance(pair, tuple) and len(pair) == 2 for pair in agreements)
 
     def test_surplus_agreements_content(self):
-        _, agreements = load_parties(
-            DATA_DIR / "25th-Knesset-2022" / "parties.json"
-        )
+        _, agreements = load_parties(DATA_DIR / "25th-Knesset-2022" / "parties.json")
         assert ("מחל", "ט") in agreements
 
 
 class TestLoadPoll:
     def test_loads_poll_data(self):
-        poll = load_poll(
-            DATA_DIR / "25th-Knesset-2022" / "polls" / "2022-10-27-now14.json"
-        )
+        poll = load_poll(DATA_DIR / "25th-Knesset-2022" / "polls" / "2022-10-27-now14.json")
         assert poll["sample_size"] == 2385
         assert "results" in poll
         assert poll["results"]["מחל"] == 0.283

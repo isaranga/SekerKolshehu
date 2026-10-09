@@ -60,9 +60,7 @@ def render_html(payload: dict) -> str:
     return template.replace(DATA_PLACEHOLDER, data)
 
 
-def build_visualization(
-    data_dir: Path, output_dir: Path, election: str, poll_name: str
-) -> Path:
+def build_visualization(data_dir: Path, output_dir: Path, election: str, poll_name: str) -> Path:
     symbols_to_names, _ = load_parties(data_dir / election / "parties.json")
     poll = load_poll(data_dir / election / "polls" / f"{poll_name}.json")
     poll_output = output_dir / election / poll_name

@@ -1,6 +1,6 @@
 import numpy as np
 
-from seker.bader_ofer import allocate_seats, _apply_threshold
+from seker.bader_ofer import _apply_threshold, allocate_seats
 
 
 class TestThreshold:
@@ -43,9 +43,7 @@ class TestSurplusAgreements:
         no_surplus = allocate_seats(votes, [], total_seats=10)
         with_surplus = allocate_seats(votes, [("A", "B")], total_seats=10)
         # The pair should get at least as many combined seats
-        assert (with_surplus["A"] + with_surplus["B"]) >= (
-            no_surplus["A"] + no_surplus["B"]
-        )
+        assert (with_surplus["A"] + with_surplus["B"]) >= (no_surplus["A"] + no_surplus["B"])
         assert sum(with_surplus.values()) == 10
 
     def test_voided_agreement_one_below_threshold(self):

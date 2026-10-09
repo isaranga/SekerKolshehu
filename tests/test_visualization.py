@@ -5,7 +5,6 @@ from pathlib import Path
 from seker.cli import run_poll
 from seker.visualization import DATA_PLACEHOLDER, OUTPUT_FILENAME, build_payload
 
-
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 
 
