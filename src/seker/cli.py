@@ -3,14 +3,14 @@ import logging
 from pathlib import Path
 
 from seker.io import (
+    discover_pending_polls,
     load_parties,
     load_poll,
-    discover_pending_polls,
-    write_stats,
     write_seat_counts,
+    write_stats,
 )
 from seker.simulation import run_simulation
-from seker.stats import compute_stats, compute_seat_counts
+from seker.stats import compute_seat_counts, compute_stats
 from seker.visualization import build_visualization
 
 logger = logging.getLogger(__name__)
@@ -36,9 +36,7 @@ def run_poll(
 
     poll_parties = set(poll["results"].keys())
     filtered_agreements = [
-        (a, b)
-        for a, b in surplus_agreements
-        if a in poll_parties and b in poll_parties
+        (a, b) for a, b in surplus_agreements if a in poll_parties and b in poll_parties
     ]
 
     logger.info(f"Running {election}/{poll_name} ({n_iterations} iterations, seed={seed})...")
@@ -89,8 +87,10 @@ def cmd_viz(args: argparse.Namespace) -> None:
     if args.election and args.poll:
         targets = [(args.election, args.poll)]
     else:
-        elections = [args.election] if args.election else sorted(
-            p.name for p in output_dir.iterdir() if p.is_dir()
+        elections = (
+            [args.election]
+            if args.election
+            else sorted(p.name for p in output_dir.iterdir() if p.is_dir())
         )
         targets = [
             (election, poll_dir.name)
@@ -105,7 +105,9 @@ def cmd_viz(args: argparse.Namespace) -> None:
 
 
 def main(argv: list[str] | None = None) -> None:
-    parser = argparse.ArgumentParser(prog="seker", description="Election poll Monte Carlo simulator")
+    parser = argparse.ArgumentParser(
+        prog="seker", description="Election poll Monte Carlo simulator"
+    )
     subparsers = parser.add_subparsers(dest="command")
 
     run_parser = subparsers.add_parser("run", help="Run simulations")
@@ -114,7 +116,9 @@ def main(argv: list[str] | None = None) -> None:
     run_parser.add_argument("--iterations", type=int, default=100_000, help="Number of iterations")
     run_parser.add_argument("--seed", type=int, default=42, help="Random seed")
 
-    viz_parser = subparsers.add_parser("viz", help="Generate HTML visualizations of simulation output")
+    viz_parser = subparsers.add_parser(
+        "viz", help="Generate HTML visualizations of simulation output"
+    )
     viz_parser.add_argument("--election", type=str, default=None, help="Election cycle name")
     viz_parser.add_argument("--poll", type=str, default=None, help="Poll name (without .json)")
 

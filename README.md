@@ -175,4 +175,3 @@ pytest                                   # all tests
 pytest tests/test_bader_ofer.py          # one file
 pytest tests/test_bader_ofer.py::test_x  # one test
 ```
-

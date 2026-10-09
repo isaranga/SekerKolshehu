@@ -1,7 +1,7 @@
 import numpy as np
 
 from seker.simulation import run_simulation
-from seker.stats import compute_stats, compute_seat_counts
+from seker.stats import compute_seat_counts, compute_stats
 
 
 class TestSimulation:

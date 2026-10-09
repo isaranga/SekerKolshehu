@@ -1,6 +1,5 @@
 from numpy.random import Generator
 
-
 TOTAL_SEATS = 120
 THRESHOLD = 0.0325
 
@@ -14,19 +13,13 @@ def allocate_seats(
     parties = list(votes.keys())
     passing = _apply_threshold(votes, total_seats)
     seats = _compute_initial_seats(votes, passing, total_seats)
-    valid_agreements = [
-        (a, b)
-        for a, b in surplus_agreements
-        if a in passing and b in passing
-    ]
+    valid_agreements = [(a, b) for a, b in surplus_agreements if a in passing and b in passing]
     seats = _distribute_remaining(votes, seats, valid_agreements, total_seats, rng)
     seats = _internal_apportion(votes, seats, valid_agreements, rng)
     return {p: seats.get(p, 0) for p in parties}
 
 
-def _apply_threshold(
-    votes: dict[str, float], total_seats: int
-) -> set[str]:
+def _apply_threshold(votes: dict[str, float], total_seats: int) -> set[str]:
     total = sum(votes.values())
     min_votes = total * THRESHOLD
     return {p for p, v in votes.items() if v >= min_votes}
@@ -109,9 +102,7 @@ def _internal_apportion(
         pair_votes = {a: votes[a], b: votes[b]}
         pair_passing = {a, b}
         pair_seats = _compute_initial_seats(pair_votes, pair_passing, combined)
-        pair_seats = _distribute_remaining(
-            pair_votes, pair_seats, [], combined, rng
-        )
+        pair_seats = _distribute_remaining(pair_votes, pair_seats, [], combined, rng)
         seats[a] = pair_seats.get(a, 0)
         seats[b] = pair_seats.get(b, 0)
     return seats

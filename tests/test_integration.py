@@ -2,10 +2,7 @@ import csv
 import json
 from pathlib import Path
 
-import numpy as np
-
 from seker.cli import run_poll
-
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 

@@ -3,7 +3,6 @@ from numpy.typing import NDArray
 
 from seker.bader_ofer import allocate_seats
 
-
 SCALE = 10_000_000
 
 
