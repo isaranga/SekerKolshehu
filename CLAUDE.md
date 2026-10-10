@@ -28,7 +28,19 @@ seker run --election 25th-Knesset-2022 --poll 2022-10-27-kan11
 # Regenerate HTML visualizations (all existing outputs, or a specific poll)
 seker viz
 seker viz --election 25th-Knesset-2022 --poll 2022-10-27-kan11
+
+# Lint, format, and run all pre-commit hooks
+uv run ruff check .
+uv run ruff format .
+uv run pre-commit run --all-files
 ```
+
+## Workflow
+
+- Never commit to `master`. It's protected, and only PRs can change it. Always create a short-lived branch (`<type>/<desc>`) and open a PR.
+- PRs are squash-merged, so the **PR title becomes the commit message on `master`**. Use a conventional prefix: `feat:`, `fix:`, `chore:`, `ci:`, `style:`, `docs:`, `data:` (new polls), `chore(deps):`.
+- `ci-ok` is the only required check. It passes when lint (ruff) and tests (pytest, Python 3.11–3.14) pass. The branch must be up to date with `master`.
+- Loop: `git switch -c <type>/<desc>` → commit → `gh pr create --fill` → `gh pr merge --auto --squash` → `git switch master && git pull`.
 
 ## Architecture
 
