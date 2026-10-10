@@ -1,6 +1,6 @@
 ---
 name: add-poll
-description: Extract Israeli election poll results from a PDF URL (usually a gov.il survey disclosure) and write a poll JSON file under data/<election>/polls/. Use when the user gives a poll PDF link and asks to add, extract, or import the poll.
+description: Extract Israeli election poll results from a PDF URL (usually a gov.il survey disclosure) and write a poll JSON file under data/<election>/polls/, then deliver it with its simulation outputs as a PR. Use when the user gives a poll PDF link and asks to add, extract, or import the poll.
 argument-hint: <pdf-url> [election folder]
 ---
 
@@ -55,4 +55,51 @@ If the user picks keep raw values, re-run the script with `--raw`.
 
 ## 4. Report
 
-Give the file path, the date, outlet, pollster, and sample size, any party-name mappings that weren't obvious, and any choices you made (for example respondents vs. the initial sample). Don't run the simulation unless asked. Mention the command for it: `seker run --election <election> --poll <name>`.
+Give the file path, the date, outlet, pollster, and sample size, any party-name mappings that weren't obvious, and any choices you made (for example respondents vs. the initial sample). Then continue to step 5.
+
+## 5. Deliver through a PR
+
+`master` is protected: the poll reaches it only through a squash-merged PR that passes `ci-ok`. The poll JSON and its simulation outputs go in **one** PR, so `master` never has a poll without its `output/` files. The simulation is deterministic (seed 42), so running it here gives the same files anyone else would get.
+
+1. **Branch.** If `git status --short` shows anything besides the new poll file, stop and ask. Otherwise:
+
+   ```bash
+   git switch master && git pull --ff-only
+   git switch -c data/poll-<date>-<media-slug>
+   ```
+
+   The poll file is untracked, so it carries over to the new branch.
+
+2. **Simulate** just this poll:
+
+   ```bash
+   uv run seker run --election <election> --poll <name>
+   ```
+
+3. **Check what changed.** `git status --short` should show exactly the poll JSON and `output/<election>/<name>/` (`stats.json`, `seat_counts.csv`, `visualization.html`). If anything else changed, stop and ask.
+
+4. **Commit** only those paths. The subject becomes the commit on `master` after the squash, so make it a proper message:
+
+   ```bash
+   git add data/<election>/polls/<name>.json output/<election>/<name>/
+   git commit -m "data: add <media> poll <date>" -m "<pollster>, n=<sample_size>. Source: <link>"
+   ```
+
+   Use the English outlet name in the subject (for example `data: add Kan 11 poll 2026-10-04`). If a pre-commit hook fails because it fixed a file, `git add` the same paths again and re-run the same `git commit`. Don't use `--no-verify`.
+
+5. **Ask before pushing.** Use AskUserQuestion with these options:
+   - **Push, open PR, enable auto-merge (Recommended)**
+   - **Push and open PR only**
+   - **Don't push**: leave the branch local and stop
+
+6. **Push and open the PR**, depending on the answer:
+
+   ```bash
+   git push -u origin HEAD
+   gh pr create --fill
+   gh pr merge --auto --squash   # only if auto-merge was chosen
+   ```
+
+   `--fill` takes the PR title and body from the single commit.
+
+7. **Report** the PR URL and whether auto-merge is on. Tell the user that after the merge they can run `git switch master && git pull` to clean up (GitHub deletes the remote branch automatically). Don't wait for CI to finish.
