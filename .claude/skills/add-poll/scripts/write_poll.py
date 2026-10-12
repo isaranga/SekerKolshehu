@@ -13,6 +13,7 @@ With --normalize, the results are scaled to sum to exactly 1.000 at 3-decimal
 precision using largest-remainder rounding. Parties with equal raw values always
 get equal rounded values: a tied group whose members can't all be rounded up is
 skipped, and the next-largest remainder gets the leftover 0.001 instead.
+After writing, it lists every party whose value differs from plain rounding.
 """
 
 import json
@@ -99,6 +100,27 @@ def main():
     with open(out_path, "w", encoding="utf-8") as f:
         f.write(out)
     print(f"Wrote {out_path} (raw sum {raw_sum}%, {len(units)} parties)")
+    if do_normalize:
+        report_rounding(raw, units)
+
+
+def report_rounding(raw: dict[str, float], units: dict[str, int]) -> None:
+    """Print the parties whose value differs from plain half-up rounding of the scaled share."""
+    total = sum(raw.values())
+    lines = []
+    for k, v in raw.items():
+        nearest = math.floor(v / total * UNITS + 0.5)
+        diff = units[k] - nearest
+        if diff:
+            lines.append(
+                f"  {k}: {units[k] / UNITS:.3f} (plain rounding: {nearest / UNITS:.3f}, "
+                f"{diff / UNITS:+.3f})"
+            )
+    if lines:
+        print("Largest-remainder adjustments vs. plain rounding:")
+        print("\n".join(lines))
+    else:
+        print("No adjustments: every value equals plain rounding.")
 
 
 if __name__ == "__main__":
