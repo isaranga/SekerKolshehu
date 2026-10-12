@@ -1,0 +1,22 @@
+{
+  "date": "2026-10-05",
+  "media": "חדשות 12",
+  "pollster": "מדגם",
+  "sample_size": 501,
+  "link": "https://www.gov.il/BlobFolder/dynamiccollectorresultitem/knesset_election99/he/Survey4190.pdf",
+  "results": {
+    "דרך": 0.190,
+    "מחל": 0.172,
+    "רק": 0.107,
+    "אמת": 0.073,
+    "ל": 0.072,
+    "ג": 0.066,
+    "ודם": 0.065,
+    "שס": 0.058,
+    "ב": 0.056,
+    "ט": 0.050,
+    "עם": 0.042,
+    "די": 0.034,
+    "ך": 0.015
+  }
+}
