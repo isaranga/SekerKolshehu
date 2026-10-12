@@ -30,11 +30,28 @@ Leave out "undecided" (לא החליטו), "won't vote", and similar rows. Note 
 
 Map each party name to its ballot symbol (the key in `parties.json`). Names in the PDF often differ from `parties.json`, because PDFs add "בראשות <leader>", use short names, or use the component party names (for example "יחד בראשות נפתלי בנט" → `רק`, "חד"ש-תע"ל-בל"ד" → `ודם`, "אח"י" → `צבי`). If a mapping is ambiguous or a party isn't in `parties.json`, ask the user. Don't guess.
 
-Filename: `data/<election>/polls/<date>-<media-slug>.json`, using the slugs already in use: `news12`, `kan11`, `maariv`, `israeltoday`, `now14`. For a new outlet, pick a similar short lowercase slug.
+Filename: `data/<election>/polls/<date>-<media-slug>.json`. Each outlet has a slug for the filename and a fixed English name for the commit subject (step 5):
 
-## 3. Check the sum. Ask if it isn't 100%
+| `media` | Slug | English name |
+|---|---|---|
+| `חדשות 12` | `news12` | News 12 |
+| `כאן 11` | `kan11` | Kan 11 |
+| `מעריב` | `maariv` | Maariv |
+| `ישראל היום` | `israeltoday` | Israel Hayom |
+| `עכשיו 14` | `now14` | Channel 14 |
 
-Write a draft JSON to the scratchpad. It has the same fields as a poll file, but `results` holds the raw percentages exactly as printed (`24.9`, not `0.249`). Then run:
+For a new outlet, pick a similar short lowercase slug and an English name, and add a row to this table in the same PR.
+
+## 3. Branch, then check the sum
+
+**Create the branch before writing anything into the repo.** If `git status --short` isn't empty, stop and ask. Otherwise:
+
+```bash
+git switch master && git pull --ff-only
+git switch -c data/poll-<date>-<media-slug>
+```
+
+Next, write a draft JSON to the scratchpad. It has the same fields as a poll file, but `results` holds the raw percentages exactly as printed (`24.9`, not `0.249`). Then run:
 
 ```bash
 PYTHONIOENCODING=utf-8 python .claude/skills/add-poll/scripts/write_poll.py <draft.json> data/<election>/polls/<name>.json data/<election>/parties.json
@@ -49,7 +66,7 @@ The script checks every symbol against `parties.json`. It exits with code 2 if t
 
 Then ask with AskUserQuestion. Offer **Normalize to 1.0 (Recommended)** first, then **Keep raw values**.
 
-If the user picks normalize, re-run the script with `--normalize`. The script rounds to 3 decimals using largest remainder and **keeps tied parties tied**: parties with the same raw % always get the same value, and the leftover 0.001 goes to the party with the next-largest remainder. Tell the user which parties gained or lost 0.001 to rounding.
+If the user picks normalize, re-run the script with `--normalize`. The script rounds to 3 decimals using largest remainder and **keeps tied parties tied**: parties with the same raw % always get the same value, and the leftover 0.001 goes to the party with the next-largest remainder. The script then lists every party whose value differs from plain rounding. Pass that list on to the user.
 
 If the user picks keep raw values, re-run the script with `--raw`.
 
@@ -61,38 +78,31 @@ Give the file path, the date, outlet, pollster, and sample size, any party-name 
 
 `master` is protected: the poll reaches it only through a squash-merged PR that passes `ci-ok`. The poll JSON and its simulation outputs go in **one** PR, so `master` never has a poll without its `output/` files. The simulation is deterministic (seed 42), so running it here gives the same files anyone else would get.
 
-1. **Branch.** If `git status --short` shows anything besides the new poll file, stop and ask. Otherwise:
+You're already on the `data/poll-<date>-<media-slug>` branch from step 3.
 
-   ```bash
-   git switch master && git pull --ff-only
-   git switch -c data/poll-<date>-<media-slug>
-   ```
-
-   The poll file is untracked, so it carries over to the new branch.
-
-2. **Simulate** just this poll:
+1. **Simulate** just this poll:
 
    ```bash
    uv run seker run --election <election> --poll <name>
    ```
 
-3. **Check what changed.** `git status --short` should show exactly the poll JSON and `output/<election>/<name>/` (`stats.json`, `seat_counts.csv`, `visualization.html`). If anything else changed, stop and ask.
+2. **Check what changed.** `git status --short` should show exactly the poll JSON and `output/<election>/<name>/` (`stats.json`, `seat_counts.csv`, `visualization.html`). If anything else changed, stop and ask.
 
-4. **Commit** only those paths. The subject becomes the commit on `master` after the squash, so make it a proper message:
+3. **Commit** only those paths. The subject becomes the commit on `master` after the squash, so make it a proper message:
 
    ```bash
    git add data/<election>/polls/<name>.json output/<election>/<name>/
-   git commit -m "data: add <media> poll <date>" -m "<pollster>, n=<sample_size>. Source: <link>"
+   git commit -m "data: add <English name> poll <date>" -m "<pollster>, n=<sample_size>. Source: <link>"
    ```
 
-   Use the English outlet name in the subject (for example `data: add Kan 11 poll 2026-10-04`). If a pre-commit hook fails because it fixed a file, `git add` the same paths again and re-run the same `git commit`. Don't use `--no-verify`.
+   Take the English name from the table in step 2 (for example `data: add Kan 11 poll 2026-10-04`). If a pre-commit hook fails because it fixed a file, `git add` the same paths again and re-run the same `git commit`. Don't use `--no-verify`.
 
-5. **Ask before pushing.** Use AskUserQuestion with these options:
+4. **Ask before pushing.** Use AskUserQuestion with these options:
    - **Push, open PR, enable auto-merge (Recommended)**
    - **Push and open PR only**
    - **Don't push**: leave the branch local and stop
 
-6. **Push and open the PR**, depending on the answer:
+5. **Push and open the PR**, depending on the answer:
 
    ```bash
    git push -u origin HEAD
@@ -102,4 +112,4 @@ Give the file path, the date, outlet, pollster, and sample size, any party-name 
 
    `--fill` takes the PR title and body from the single commit.
 
-7. **Report** the PR URL and whether auto-merge is on. Tell the user that after the merge they can run `git switch master && git pull` to clean up (GitHub deletes the remote branch automatically). Don't wait for CI to finish.
+6. **Report** the PR URL and whether auto-merge is on. Tell the user that after the merge they can run `git switch master && git pull` to clean up (GitHub deletes the remote branch automatically). Don't wait for CI to finish.
