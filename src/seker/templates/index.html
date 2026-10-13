@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>סקר כלשהו</title>
+<script>
+  // Apply a saved theme choice before first paint
+  try {
+    const saved = localStorage.getItem("seker-theme");
+    if (saved === "light" || saved === "dark") document.documentElement.dataset.theme = saved;
+  } catch {}
+</script>
+<style>
+  :root {
+    color-scheme: light;
+    --page: #f9f9f7;
+    --surface: #fcfcfb;
+    --text-primary: #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted: #898781;
+    --grid: #e1e0d9;
+    --axis: #c3c2b7;
+    --border: rgba(11, 11, 11, 0.10);
+    --series: #2a78d6;
+    --highlight: rgba(42, 120, 214, 0.10);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --page: #0d0d0d;
+      --surface: #1a1a19;
+      --text-primary: #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted: #898781;
+      --grid: #2c2c2a;
+      --axis: #383835;
+      --border: rgba(255, 255, 255, 0.10);
+      --series: #3987e5;
+      --highlight: rgba(57, 135, 229, 0.16);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --page: #0d0d0d;
+    --surface: #1a1a19;
+    --text-primary: #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted: #898781;
+    --grid: #2c2c2a;
+    --axis: #383835;
+    --border: rgba(255, 255, 255, 0.10);
+    --series: #3987e5;
+    --highlight: rgba(57, 135, 229, 0.16);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--page);
+    color: var(--text-primary);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+  main { max-width: 880px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { font-size: 26px; font-weight: 600; margin: 0 0 4px; }
+  .section-note { color: var(--text-secondary); font-size: 14px; margin: 0 0 24px; }
+  .header-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+  #theme-toggle {
+    flex: none;
+    background: var(--surface);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 12px;
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  #theme-toggle:hover { background: var(--highlight); }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  th, td { padding: 10px 16px; text-align: start; white-space: nowrap; }
+  /* Every cell holds a link that fills it, so the whole row is clickable */
+  td { padding: 0; }
+  td a { display: block; padding: 10px 16px; color: inherit; text-decoration: none; }
+  th {
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 500;
+    border-bottom: 1px solid var(--axis);
+  }
+  td { border-bottom: 1px solid var(--grid); }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: var(--highlight); }
+  td.num, th.num { text-align: right; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="header-top">
+      <h1>סקר כלשהו</h1>
+      <button type="button" id="theme-toggle"></button>
+    </div>
+    <p class="section-note">התפלגות המנדטים האפשרית לכל סקר, לפי 100,000 סימולציות מונטה קרלו ושיטת בדר-עופר.</p>
+  </header>
+  <div class="card table-wrap">
+    <table>
+      <thead>
+        <tr><th>תאריך</th><th>גוף שידור</th><th>מכון סקרים</th><th class="num">גודל מדגם</th></tr>
+      </thead>
+      <tbody>
+<!--__ROWS__-->
+      </tbody>
+    </table>
+  </div>
+</main>
+<script>
+const themeToggle = document.getElementById("theme-toggle");
+const currentTheme = () => document.documentElement.dataset.theme
+  ?? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+const updateThemeToggle = () => {
+  themeToggle.textContent = currentTheme() === "dark" ? "מצב בהיר" : "מצב כהה";
+};
+themeToggle.addEventListener("click", () => {
+  const next = currentTheme() === "dark" ? "light" : "dark";
+  document.documentElement.dataset.theme = next;
+  try { localStorage.setItem("seker-theme", next); } catch {}
+  updateThemeToggle();
+});
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", updateThemeToggle);
+updateThemeToggle();
+</script>
+</body>
+</html>
