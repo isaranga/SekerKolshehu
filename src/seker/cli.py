@@ -9,6 +9,7 @@ from seker.io import (
     write_seat_counts,
     write_stats,
 )
+from seker.pages import build_site
 from seker.simulation import run_simulation
 from seker.stats import compute_seat_counts, compute_stats
 from seker.visualization import build_visualization
@@ -104,6 +105,13 @@ def cmd_viz(args: argparse.Namespace) -> None:
         logger.info(f"Visualization written to {path}")
 
 
+def cmd_pages(args: argparse.Namespace) -> None:
+    root = _project_root()
+    site_dir = Path(args.out) if args.out else root / "_site"
+    path = build_site(root / "data", root / "output", args.election, site_dir)
+    logger.info(f"Site written to {path.parent}")
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(
         prog="seker", description="Election poll Monte Carlo simulator"
@@ -122,11 +130,21 @@ def main(argv: list[str] | None = None) -> None:
     viz_parser.add_argument("--election", type=str, default=None, help="Election cycle name")
     viz_parser.add_argument("--poll", type=str, default=None, help="Poll name (without .json)")
 
+    pages_parser = subparsers.add_parser(
+        "pages", help="Build a static site of one election's visualizations"
+    )
+    pages_parser.add_argument("--election", type=str, required=True, help="Election cycle name")
+    pages_parser.add_argument(
+        "--out", type=str, default=None, help="Site directory (default: _site)"
+    )
+
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     if args.command == "run":
         cmd_run(args)
     elif args.command == "viz":
         cmd_viz(args)
+    elif args.command == "pages":
+        cmd_pages(args)
     else:
         parser.print_help()

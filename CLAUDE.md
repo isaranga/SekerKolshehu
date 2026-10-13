@@ -29,6 +29,9 @@ seker run --election 25th-Knesset-2022 --poll 2022-10-27-kan11
 seker viz
 seker viz --election 25th-Knesset-2022 --poll 2022-10-27-kan11
 
+# Build the GitHub Pages site (index + one page per poll) into _site/
+seker pages --election 26th-Knesset-2026
+
 # Lint, format, and run all pre-commit hooks
 uv run ruff check .
 uv run ruff format .
@@ -56,6 +59,7 @@ This is a Monte Carlo simulator for Israeli election polls. It models seat alloc
 - `simulation.py` — Runs 100k Dirichlet-sampled iterations, calls `allocate_seats` per iteration
 - `stats.py` — Aggregates simulation results into mean, CI bounds, threshold probability
 - `visualization.py` — Builds a self-contained Hebrew (RTL) `visualization.html` per poll by injecting a JSON payload into `templates/visualization.html` (vanilla JS + inline SVG)
+- `pages.py` — Builds the static GitHub Pages site for one election: copies each `visualization.html` to `<poll>/index.html` and renders `templates/index.html` (poll list, newest first). Deployed by `.github/workflows/pages.yml` on pushes to `master` that touch `output/26th-Knesset-2026/**`; the election is set only in that workflow
 - `io.py` — File I/O: loading parties/polls, writing outputs, discovering pending polls
 - `cli.py` — Entry point (`seker run`); resolves paths relative to project root (3 levels up from `cli.py`)
 
