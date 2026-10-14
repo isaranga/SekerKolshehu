@@ -1,0 +1,98 @@
+{
+  "דרך": {
+    "avg_seats": 20.71,
+    "prob_pass_threshold": 1.0,
+    "ci_lower": 17,
+    "ci_upper": 24
+  },
+  "מחל": {
+    "avg_seats": 19.43,
+    "prob_pass_threshold": 1.0,
+    "ci_lower": 16,
+    "ci_upper": 23
+  },
+  "רק": {
+    "avg_seats": 14.51,
+    "prob_pass_threshold": 1.0,
+    "ci_lower": 12,
+    "ci_upper": 17
+  },
+  "אמת": {
+    "avg_seats": 10.83,
+    "prob_pass_threshold": 1.0,
+    "ci_lower": 8,
+    "ci_upper": 13
+  },
+  "ל": {
+    "avg_seats": 9.15,
+    "prob_pass_threshold": 1.0,
+    "ci_lower": 7,
+    "ci_upper": 12
+  },
+  "ודם": {
+    "avg_seats": 8.15,
+    "prob_pass_threshold": 0.9999,
+    "ci_lower": 6,
+    "ci_upper": 10
+  },
+  "ב": {
+    "avg_seats": 7.77,
+    "prob_pass_threshold": 0.9999,
+    "ci_lower": 6,
+    "ci_upper": 10
+  },
+  "ג": {
+    "avg_seats": 7.91,
+    "prob_pass_threshold": 0.9998,
+    "ci_lower": 6,
+    "ci_upper": 10
+  },
+  "שס": {
+    "avg_seats": 6.94,
+    "prob_pass_threshold": 0.9974,
+    "ci_lower": 5,
+    "ci_upper": 9
+  },
+  "ט": {
+    "avg_seats": 6.7,
+    "prob_pass_threshold": 0.9957,
+    "ci_lower": 5,
+    "ci_upper": 9
+  },
+  "עם": {
+    "avg_seats": 4.05,
+    "prob_pass_threshold": 0.7911,
+    "ci_lower": 0,
+    "ci_upper": 7
+  },
+  "די": {
+    "avg_seats": 2.83,
+    "prob_pass_threshold": 0.6083,
+    "ci_lower": 0,
+    "ci_upper": 6
+  },
+  "ך": {
+    "avg_seats": 1.03,
+    "prob_pass_threshold": 0.2378,
+    "ci_lower": 0,
+    "ci_upper": 5
+  },
+  "כן": {
+    "avg_seats": 0.0,
+    "prob_pass_threshold": 0.0002,
+    "ci_lower": 0,
+    "ci_upper": 0
+  },
+  "זך": {
+    "avg_seats": 0.0,
+    "prob_pass_threshold": 0.0001,
+    "ci_lower": 0,
+    "ci_upper": 0
+  },
+  "ני": {
+    "avg_seats": 0.0,
+    "prob_pass_threshold": 0.0,
+    "ci_lower": 0,
+    "ci_upper": 0
+  }
+}
