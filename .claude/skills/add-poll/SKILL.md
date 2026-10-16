@@ -40,6 +40,7 @@ Filename: `data/<election>/polls/<date>-<media-slug>.json`. Each outlet has a sl
 | `ישראל היום` | `israeltoday` | Israel Hayom |
 | `עכשיו 14` | `now14` | Channel 14 |
 | `וואלה` | `walla` | Walla |
+| `חדשות i24` | `i24` | i24 News |
 
 For a new outlet, pick a similar short lowercase slug and an English name, and add a row to this table in the same PR.
 
