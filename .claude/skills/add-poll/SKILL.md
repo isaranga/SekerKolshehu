@@ -2,6 +2,7 @@
 name: add-poll
 description: Extract Israeli election poll results from a PDF URL (usually a gov.il survey disclosure) and write a poll JSON file under data/<election>/polls/, then deliver it with its simulation outputs as a PR. Use when the user gives a poll PDF link and asks to add, extract, or import the poll.
 argument-hint: <pdf-url> [election folder]
+model: sonnet
 ---
 
 # Add a poll from a PDF
@@ -10,8 +11,8 @@ Input: a URL to a poll PDF (`$ARGUMENTS`). The election folder defaults to the l
 
 ## 1. Fetch and read
 
-- Download the PDF into the scratchpad directory with `curl -sSL -o <file>.pdf '<url>'`, then open it with the Read tool. Use the `pages` parameter for PDFs over 10 pages.
-- Read `data/<election>/parties.json` and one or two existing files in `data/<election>/polls/` so the output matches their structure.
+- Download the PDF into the scratchpad directory with `curl -sSL -o <file>.pdf '<url>'`, then open it with the Read tool. Use the `pages` parameter for PDFs over 10 pages. Read it once.
+- Read `data/<election>/parties.json` and one existing file in `data/<election>/polls/` so the output matches its structure.
 
 ## 2. Extract
 
@@ -30,7 +31,7 @@ Leave out "undecided" (לא החליטו), "won't vote", and similar rows. Note 
 
 Map each party name to its ballot symbol (the key in `parties.json`). Names in the PDF often differ from `parties.json`, because PDFs add "בראשות <leader>", use short names, or use the component party names (for example "יחד בראשות נפתלי בנט" → `רק`, "חד"ש-תע"ל-בל"ד" → `ודם`, "אח"י" → `צבי`). If a mapping is ambiguous or a party isn't in `parties.json`, ask the user. Don't guess.
 
-Filename: `data/<election>/polls/<date>-<media-slug>.json`. Each outlet has a slug for the filename and a fixed English name for the commit subject (step 5):
+Filename: `data/<election>/polls/<date>-<media-slug>.json`. Each outlet has a slug for the filename and a fixed English name for the commit subject (step 4):
 
 | `media` | Slug | English name |
 |---|---|---|
@@ -74,11 +75,7 @@ If the user picks normalize, re-run the script with `--normalize`. The script ro
 
 If the user picks keep raw values, re-run the script with `--raw`.
 
-## 4. Report
-
-Give the file path, the date, outlet, pollster, and sample size, any party-name mappings that weren't obvious, and any choices you made (for example respondents vs. the initial sample). Then continue to step 5.
-
-## 5. Deliver through a PR
+## 4. Deliver through a PR
 
 `master` is protected: the poll reaches it only through a squash-merged PR that passes `ci-ok`. The poll JSON and its simulation outputs go in **one** PR, so `master` never has a poll without its `output/` files. The simulation is deterministic (seed 42), so running it here gives the same files anyone else would get.
 
@@ -116,4 +113,4 @@ You're already on the `data/poll-<date>-<media-slug>` branch from step 3.
 
    `--fill` takes the PR title and body from the single commit.
 
-6. **Report** the PR URL and whether auto-merge is on. Tell the user that after the merge they can run `git switch master && git pull` to clean up (GitHub deletes the remote branch automatically). Don't wait for CI to finish.
+6. **Report** the file path, the date, outlet, pollster, and sample size, any party-name mappings that weren't obvious, any choices you made (for example respondents vs. the initial sample), the PR URL, and whether auto-merge is on. Tell the user that after the merge they can run `git switch master && git pull` to clean up (GitHub deletes the remote branch automatically). Don't wait for CI to finish.
